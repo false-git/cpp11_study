@@ -1,6 +1,6 @@
 CXXFLAGS += -std=c++11
 
-run: run-move
+run: run-thread
 
 clean:
 	rm smart_ptr
@@ -15,5 +15,11 @@ run-move: move
 	./move
 
 move: move.cc
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+run-thread: thread
+	./thread
+
+thread: thread.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 

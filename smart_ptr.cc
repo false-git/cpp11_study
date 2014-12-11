@@ -53,6 +53,15 @@ void print(const std::string& name, const std::weak_ptr<Hoge>& ptr) {
     }
 }
 
+/**
+ * unique_ptrのvectorを返す関数
+ */
+std::vector<std::unique_ptr<Hoge>> makeVector() {
+    std::vector<std::unique_ptr<Hoge>> vec;
+    vec.push_back(std::unique_ptr<Hoge>(new Hoge("twelve")));
+    return vec;
+}
+
 int main(int argc, char *argv[]) {
     // auto変数。宣言してから、スコープを出るまで。
     Hoge one("one");
@@ -163,6 +172,13 @@ int main(int argc, char *argv[]) {
 	// この方法でもmoveも可能
 	vec2 = std::move(vec);
 	std::cout << vec.size() << ", " << vec2.size() << std::endl;
+    }
+    s_nodebug = false;
+    std::cout << "========== step 8 more^3 unique_ptr" << std::endl;
+    s_nodebug = true;
+    {
+	std::vector<std::unique_ptr<Hoge>> vec;
+	vec = makeVector(); // エラーにならない！(move代入演算子)
     }
     s_nodebug = false;
     std::cout << "========== end" << std::endl;

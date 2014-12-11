@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 class Hoge {
   public:
@@ -34,10 +35,18 @@ void print(const std::string& name, const std::shared_ptr<Hoge>& ptr) {
     std::cout << name << "(" << ptr->name() << "): " << ptr.use_count() << ", " << ptr.get() << std::endl;
 }
 
+void print(const std::string& name, const std::weak_ptr<Hoge>& ptr) {
+    if (std::shared_ptr<Hoge> sp = ptr.lock()) {
+	print(name, sp);
+    } else {
+	std::cout << name << "(): " << ptr.use_count() << ", " << ptr.expired() << std::endl;
+    }
+}
+
 int main(int argc, char *argv[]) {
     // auto変数。宣言してから、スコープを出るまで。
     Hoge one("one");
-    std::cout << "========== step 1" << std::endl;
+    std::cout << "========== step 1 unique_ptr" << std::endl;
     {
 	// unique_ptr。宣言してから、スコープを出るまで。
 	std::unique_ptr<Hoge> two(new Hoge("two"));
@@ -58,7 +67,7 @@ int main(int argc, char *argv[]) {
 	print("three", three);
 	// 関数に渡したり、返値で使う例にしないと、auto_ptrとあまり違わないかも
     }
-    std::cout << "========== step 2" << std::endl;
+    std::cout << "========== step 2 shared_ptr" << std::endl;
     {
 	// shared_ptr。宣言してから、全てのshared_ptrが消えるまで。
 	std::shared_ptr<Hoge> four(new Hoge("four"));
@@ -69,18 +78,66 @@ int main(int argc, char *argv[]) {
 	}
 	print("four", four);
     }
-    std::cout << "========== step 3" << std::endl;
+    std::cout << "========== step 3 make_shared(with args)" << std::endl;
     {
 	// make_shared使った方が早いかつ安全って書いてあるんだけど、
 	// 以下の書き方だとコピーが2回走る
 	// →嘘だった。-std=c++11 をつけると、1回になった。
 	std::shared_ptr<Hoge> four = std::make_shared<Hoge>("four");
     }
-    std::cout << "========== step 4" << std::endl;
+    std::cout << "========== step 4 make_shared(defalut)" << std::endl;
     {
 	// 引数なしだと、デフォルトコンストラクタ1回しか呼ばれない。
 	// →-std=c++11 をつけても、1回。
 	std::shared_ptr<Hoge> noname = std::make_shared<Hoge>();
+    }
+    std::cout << "========== step 5 weak_ptr" << std::endl;
+    {
+	// weak_ptr。shared_ptrとセットで使う。
+	// lock()を呼び出してshared_ptrを取得しないと使えない。
+	// shared_ptrを使うと循環参照になるような場合に使う。
+	std::weak_ptr<Hoge> six;
+	print("six", six);
+	{
+	    std::shared_ptr<Hoge> seven = std::make_shared<Hoge>("seven");
+	    six = seven;
+	    print("six", six); // print の中でlockするので、参照カウントが2になる。
+	    print("seven", seven);
+	}
+	print("six", six);
+	// make_sharedを使うと、内側のブロックを抜けた時点でHogeのデストラクタ
+	// は呼ばれるが、管理領域が解放されない。外側のブロックを抜けた時点で
+	// 解放される、みたいな記述あり。
+	// weak_countみたいなものを取る手段はないみたいだけど。
+    }
+    std::cout << "========== step 6 more unique_ptr" << std::endl;
+    {
+	std::vector<std::unique_ptr<Hoge>> vec;
+	vec.push_back(std::unique_ptr<Hoge>(new Hoge("eight")));
+	std::unique_ptr<Hoge> nine(new Hoge("nine"));
+	vec.push_back(std::move(nine));
+	print("nine", nine);
+	std::vector<std::unique_ptr<Hoge>>::iterator it;
+	for (it = vec.begin(); it != vec.end(); it++) {
+	    // vectorから取り出さなければ、普通にiteratorで回して良いらしい。
+	    print((*it)->name(), *it);
+	}
+	std::vector<std::unique_ptr<Hoge>> vec2;
+	// コピーしようとするとエラー。
+	//vec2 = vec;
+	// moveなら大丈夫。
+	for (it = vec.begin(); it != vec.end(); it++) {
+	    vec2.push_back(std::move(*it));
+	}
+	int i = 0;
+	for (it = vec.begin(); it != vec.end(); it++) {
+	    // moveしたので全部空になっている。
+	    std::cout << i++ << ": " << static_cast<bool>(*it) << std::endl;
+	}
+	for (it = vec2.begin(); it != vec2.end(); ) {
+	    print((*it)->name(), *it);
+	    it = vec2.erase(it); // このタイミングでunique_ptrの寿命がつきる
+	}
     }
     std::cout << "========== end" << std::endl;
     return 0;

@@ -2,19 +2,29 @@
 #include <string>
 #include <vector>
 
+static bool s_nodebug;
+
 class Hoge {
   public:
     Hoge() {
-	std::cout << name_ << ": [BORN] (default) " << this << std::endl;
+	if (!s_nodebug) {
+	    std::cout << name_ << ": [BORN] (default) " << this << std::endl;
+	}
     }
     Hoge(const Hoge& hoge): name_(hoge.name_) {
-	std::cout << name_ << ": [BORN] (copy) " << this << std::endl;
+	if (!s_nodebug) {
+	    std::cout << name_ << ": [BORN] (copy) " << this << std::endl;
+	}
     }
     Hoge(const std::string& name): name_(name) {
-	std::cout << name_ << ": [BORN] " << this << std::endl;
+	if (!s_nodebug) {
+	    std::cout << name_ << ": [BORN] " << this << std::endl;
+	}
     }
     virtual ~Hoge() {
-	std::cout << name_ << ": [DEAD] " << this << std::endl;
+	if (!s_nodebug) {
+	    std::cout << name_ << ": [DEAD] " << this << std::endl;
+	}
     }
     std::string name() const {
 	return name_;
@@ -139,6 +149,22 @@ int main(int argc, char *argv[]) {
 	    it = vec2.erase(it); // このタイミングでunique_ptrの寿命がつきる
 	}
     }
+    std::cout << "========== step 7 more more unique_ptr" << std::endl;
+    s_nodebug = true;
+    {
+	std::vector<std::unique_ptr<Hoge>> vec;
+	for (int i = 0; i < 1024; i++) {
+	    vec.push_back(std::unique_ptr<Hoge>(new Hoge()));
+	    // 以下を出力すると、倍々で拡張しているよう
+	    // 拡張が発生するとコピーが走るはずだが、特にエラーにならない。
+	    //std::cout << vec.capacity() << std::endl;
+	}
+	std::vector<std::unique_ptr<Hoge>> vec2;
+	// この方法でもmoveも可能
+	vec2 = std::move(vec);
+	std::cout << vec.size() << ", " << vec2.size() << std::endl;
+    }
+    s_nodebug = false;
     std::cout << "========== end" << std::endl;
     return 0;
 }

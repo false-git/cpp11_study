@@ -1,9 +1,9 @@
 CXXFLAGS += -std=c++11
 
-run: run-thread
+run: run-lambda
 
 clean:
-	rm smart_ptr
+	rm -f smart_ptr move thread lambda
 
 run-smart_ptr: smart_ptr
 	./smart_ptr
@@ -21,5 +21,11 @@ run-thread: thread
 	./thread
 
 thread: thread.cc
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+run-lambda: lambda
+	./lambda
+
+lambda: lambda.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 

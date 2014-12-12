@@ -8,3 +8,5 @@ c++11のお勉強用コード
     move/copyの例
 *   thread.cc  
     threadの例
+*   lambda.cc  
+    lambdaの例

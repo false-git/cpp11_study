@@ -2,7 +2,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <unistd.h>
+#include <chrono>
 
 // mutexの他に、recursive_mutex, timed_mutex, recursive_timed_mutexがある。
 std::mutex log_mutex;
@@ -16,7 +16,7 @@ int func1(int arg) {
 	std::lock_guard<std::mutex> lock(log_mutex);
 	std::cout << "func1(" << arg << "): in" << std::endl;
     }
-    sleep(arg);
+    std::this_thread::sleep_for(std::chrono::seconds(arg));
     {
 	// lock_guardは変数の寿命の間mutexをlockする。
 	std::lock_guard<std::mutex> lock(s_mutex);
@@ -27,7 +27,7 @@ int func1(int arg) {
 	std::lock_guard<std::mutex> lock(log_mutex);
 	std::cout << "func1(" << arg << "): notify" << std::endl;
     }
-    sleep(3);
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     {
 	std::lock_guard<std::mutex> lock(log_mutex);
 	std::cout << "func1(" << arg << "): out" << std::endl;

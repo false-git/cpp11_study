@@ -10,3 +10,5 @@ c++11のお勉強用コード
     threadの例
 *   lambda.cc  
     lambdaの例
+*   rvalue.cc
+    左辺値、右辺値、右辺値参照の例

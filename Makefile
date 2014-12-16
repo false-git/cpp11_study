@@ -1,9 +1,9 @@
 CXXFLAGS += -std=c++11
 
-run: run-lambda
+run: run-rvalue
 
 clean:
-	rm -f smart_ptr move thread lambda
+	rm -f smart_ptr move thread lambda rvalue
 
 run-smart_ptr: smart_ptr
 	./smart_ptr
@@ -27,5 +27,11 @@ run-lambda: lambda
 	./lambda
 
 lambda: lambda.cc
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+run-rvalue: rvalue
+	./rvalue
+
+rvalue: rvalue.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
